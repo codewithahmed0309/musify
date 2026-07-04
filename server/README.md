@@ -1,6 +1,6 @@
-# Ahmedify API
+# Musify API
 
-Express + TypeScript backend for the Ahmedify music client. Single private
+Express + TypeScript backend for the Musify music client. Single private
 user (no public registration), JWT auth, Supabase as the data store.
 
 ## Setup

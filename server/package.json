@@ -1,9 +1,9 @@
 {
-  "name": "ahmedify-server",
+  "name": "musify-server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Ahmedify API — Express + TypeScript + JWT + Supabase",
+  "description": "Musify API — Express + TypeScript + JWT + Supabase",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
@@ -31,7 +31,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.12",
-    "@types/node": "^22.7.5",
+    "@types/node": "^22.20.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"
   },

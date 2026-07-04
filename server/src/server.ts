@@ -17,7 +17,7 @@ process.on("unhandledRejection", (reason) => {
 });
 
 const server = app.listen(env.port, () => {
-  console.log(`Ahmedify API listening on http://localhost:${env.port}`);
+  console.log(`Musify API listening on http://localhost:${env.port}`);
   console.log(`Environment: ${env.nodeEnv}`);
 });
 

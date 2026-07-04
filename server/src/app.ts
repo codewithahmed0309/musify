@@ -21,7 +21,7 @@ app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));
 app.get("/api/health", (_req, res) => {
   res.json({
     success: true,
-    message: "Ahmedify API is running 🚀",
+    message: "Musify API is running 🚀",
   });
 });
 

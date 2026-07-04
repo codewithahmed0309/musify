@@ -8,6 +8,7 @@ import {
   createSong,
   updateSong,
   deleteSong,
+  getSongById,
 } from "../services/songs.service.js";
 import { deleteFileByUrl } from "../services/storage.service.js";
 
@@ -59,7 +60,14 @@ export const updateSongHandler = asyncHandler(async (req: Request, res: Response
     throw new AppError("Provide at least one of: title, albumTitle, coverUrl", 400);
   }
 
+  const previous = coverUrl !== undefined ? await getSongById(id) : null;
+
   const song = await updateSong(id, { title, albumTitle, coverUrl });
+
+  if (previous && previous.cover_url && previous.cover_url !== coverUrl) {
+    await deleteFileByUrl(previous.cover_url);
+  }
+
   res.json(song);
 });
 
