@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { useToast } from "@/hooks/useToast";
+import Button from "@/components/common/Button";
+import { LogoMark } from "@/components/brand/Logo";
 import type { AuthResponse } from "@/types";
 
 export default function Login() {
@@ -15,6 +18,7 @@ export default function Login() {
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,6 +34,7 @@ export default function Login() {
       navigate(redirectTo, { replace: true });
     } catch {
       setError("Incorrect username or password.");
+      showToast("Login failed. Check your username and password.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -39,10 +44,10 @@ export default function Login() {
     <div className="min-h-screen w-full flex items-center justify-center bg-ahmedify-bg px-4">
       <div className="w-full max-w-sm animate-fadeIn">
         <div className="flex flex-col items-center mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-ahmedify-green flex items-center justify-center mb-4">
-            <span className="text-black font-extrabold text-2xl">A</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Ahmedify</h1>
+          <LogoMark size={64} glow className="mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight">
+            Mus<span className="text-ahmedify-green">ify</span>
+          </h1>
           <p className="text-sm text-ahmedify-text-secondary mt-1">
             Your private music, wherever you are.
           </p>
@@ -64,9 +69,10 @@ export default function Login() {
               type="text"
               autoComplete="username"
               required
+              disabled={isSubmitting}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="bg-ahmedify-card border border-ahmedify-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-ahmedify-green transition-colors"
+              className="bg-ahmedify-card border border-ahmedify-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-ahmedify-green transition-colors disabled:opacity-60"
             />
           </div>
 
@@ -83,15 +89,16 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
+                disabled={isSubmitting}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-ahmedify-card border border-ahmedify-border rounded-xl px-4 py-2.5 pr-11 text-sm outline-none focus:border-ahmedify-green transition-colors"
+                className="w-full bg-ahmedify-card border border-ahmedify-border rounded-xl px-4 py-2.5 pr-11 text-sm outline-none focus:border-ahmedify-green transition-colors disabled:opacity-60"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ahmedify-text-secondary hover:text-ahmedify-text"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ahmedify-text-secondary hover:text-ahmedify-text transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -104,14 +111,15 @@ export default function Login() {
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
-            disabled={isSubmitting}
-            className="mt-2 flex items-center justify-center gap-2 bg-ahmedify-green hover:bg-ahmedify-green-hover disabled:opacity-60 text-black font-semibold text-sm rounded-full py-2.5 transition-colors"
+            isLoading={isSubmitting}
+            icon={<Lock size={14} />}
+            fullWidth
+            className="mt-2"
           >
-            <Lock size={14} />
             {isSubmitting ? "Signing in..." : "Log in"}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-xs text-ahmedify-text-muted mt-6">

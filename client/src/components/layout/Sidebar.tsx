@@ -8,6 +8,7 @@ import {
   ListMusic,
   Settings,
 } from "lucide-react";
+import { LogoMark } from "@/components/brand/Logo";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", icon: Home },
@@ -21,11 +22,11 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   return (
     <aside className="hidden md:flex md:flex-col w-60 shrink-0 h-full bg-ahmedify-bg-secondary border-r border-ahmedify-border px-3 py-5">
-      <div className="flex items-center gap-2 px-3 mb-8">
-        <div className="h-8 w-8 rounded-lg bg-ahmedify-green flex items-center justify-center">
-          <span className="text-black font-extrabold">A</span>
-        </div>
-        <span className="font-bold text-lg tracking-tight">Musify</span>
+      <div className="flex items-center gap-2.5 px-3 mb-8">
+        <LogoMark size={32} />
+        <span className="font-bold text-lg tracking-tight">
+          Mus<span className="text-ahmedify-green">ify</span>
+        </span>
       </div>
 
       <nav className="flex flex-col gap-1">

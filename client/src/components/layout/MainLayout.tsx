@@ -1,4 +1,5 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MiniPlayer from "@/components/player/MiniPlayer";
@@ -9,6 +10,7 @@ import { usePlayerStore } from "@/store/playerStore";
 
 export default function MainLayout() {
   const currentSong = usePlayerStore((s) => s.currentSong);
+  const location = useLocation();
 
   return (
     <AudioEngineProvider>
@@ -22,7 +24,17 @@ export default function MainLayout() {
               paddingBottom: currentSong ? "6rem" : "1.5rem",
             }}
           >
-            <Outlet />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
         <MiniPlayer />

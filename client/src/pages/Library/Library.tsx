@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useSongs } from "@/hooks/useMusicData";
 import SongRow from "@/components/common/SongRow";
+import { RowSkeleton } from "@/components/common/loader";
+import EmptyState from "@/components/common/EmptyState";
 
 type SortKey = "recent" | "title" | "artist";
 
@@ -39,7 +41,7 @@ export default function Library() {
               <button
                 key={key}
                 onClick={() => setSortKey(key)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                className={`text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150 ${
                   sortKey === key
                     ? "bg-ahmedify-green text-black"
                     : "text-ahmedify-text-secondary hover:text-ahmedify-text"
@@ -53,14 +55,18 @@ export default function Library() {
       </div>
 
       {loading && (
-        <p className="text-sm text-ahmedify-text-secondary">Loading...</p>
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <RowSkeleton key={i} />
+          ))}
+        </div>
       )}
 
       {!loading && sorted.length === 0 && (
-        <p className="text-sm text-ahmedify-text-secondary">
-          Your library is empty. Songs added to Supabase will appear here
-          automatically.
-        </p>
+        <EmptyState
+          title="Your library is empty"
+          description="Songs added on the Add Song page will appear here automatically."
+        />
       )}
 
       <div className="flex flex-col">

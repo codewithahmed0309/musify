@@ -15,7 +15,7 @@ export default function Settings() {
           Account
         </h2>
         <p className="text-sm text-ahmedify-text-secondary mb-4">
-          You're signed in to this private Ahmedify instance.
+          You're signed in to this private Musify instance.
         </p>
         <button
           onClick={logout}
@@ -51,7 +51,7 @@ export default function Settings() {
           About
         </h2>
         <p className="text-sm text-ahmedify-text-secondary">
-          Ahmedify — a private music streaming platform. Version 1.0.0
+          Musify — a private music streaming platform. Version 1.0.0
         </p>
       </section>
     </div>

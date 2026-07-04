@@ -48,10 +48,43 @@ input[type="range"]::-webkit-slider-thumb {
   background: #fff;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 input[type="range"]:hover::-webkit-slider-thumb {
   opacity: 1;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+input[type="range"]:hover::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* Playback seek bars: the thumb doubles as a "you are here" indicator for
+   the currently playing track, so — unlike the volume slider — it stays
+   visible all the time instead of only appearing on hover. */
+input[type="range"].seek-bar::-webkit-slider-thumb {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.25);
+}
+input[type="range"].seek-bar:hover::-webkit-slider-thumb,
+input[type="range"].seek-bar:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+input[type="range"].seek-bar::-moz-range-thumb {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.25);
+}
+input[type="range"].seek-bar:hover::-moz-range-thumb,
+input[type="range"].seek-bar:active::-moz-range-thumb {
+  transform: scale(1.15);
 }
 
 /* Focus visibility for accessibility */

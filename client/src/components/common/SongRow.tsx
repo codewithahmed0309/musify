@@ -14,9 +14,16 @@ interface Props {
   index?: number;
   queue?: Song[];
   onDelete?: (song: Song) => void;
+  hideThumbnail?: boolean;
 }
 
-export default function SongRow({ song, index, queue, onDelete }: Props) {
+export default function SongRow({
+  song,
+  index,
+  queue,
+  onDelete,
+  hideThumbnail = false,
+}: Props) {
   const { currentSong, isPlaying, playSong, togglePlay } = usePlayerStore();
   const isCurrent = currentSong?.id === song.id;
   const [confirming, setConfirming] = useState(false);
@@ -63,16 +70,18 @@ export default function SongRow({ song, index, queue, onDelete }: Props) {
           <Play size={14} />
         )}
       </span>
-      <div className="h-10 w-10 rounded-md overflow-hidden bg-ahmedify-bg-secondary shrink-0">
-        {song.cover_url ? (
-          <img
-            src={song.cover_url}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
-        ) : null}
-      </div>
+      {!hideThumbnail && (
+        <div className="h-10 w-10 rounded-md overflow-hidden bg-ahmedify-bg-secondary shrink-0">
+          {song.cover_url ? (
+            <img
+              src={song.cover_url}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          ) : null}
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <p
           className={`text-sm font-medium truncate ${

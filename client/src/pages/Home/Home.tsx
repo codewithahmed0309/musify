@@ -3,6 +3,7 @@ import SectionHeader from "@/components/common/SectionHeader";
 import HorizontalScroller from "@/components/common/HorizontalScroller";
 import SongCard from "@/components/common/SongCard";
 import { ArtistCard, PlaylistCard } from "@/components/common/EntityCards";
+import { CardRowSkeleton } from "@/components/common/loader";
 import { useSongs, useArtists, usePlaylists } from "@/hooks/useMusicData";
 import { usePlayerStore } from "@/store/playerStore";
 
@@ -41,38 +42,48 @@ export default function Home() {
   return (
     <div className="pb-6">
       <SectionHeader title="Recently Played" />
-      <HorizontalScroller emptyLabel="Songs you play will show up here.">
-        {recentlyPlayed.map((song) => (
-          <SongCard key={song.id} song={song} queue={recentlyPlayed} />
-        ))}
-      </HorizontalScroller>
+      {songsLoading ? (
+        <CardRowSkeleton count={4} />
+      ) : (
+        <HorizontalScroller emptyLabel="Songs you play will show up here.">
+          {recentlyPlayed.map((song) => (
+            <SongCard key={song.id} song={song} queue={recentlyPlayed} />
+          ))}
+        </HorizontalScroller>
+      )}
 
       <SectionHeader title="Trending" />
-      <HorizontalScroller
-        emptyLabel={songsLoading ? "Loading..." : "No songs yet."}
-      >
-        {trending.map((song) => (
-          <SongCard key={song.id} song={song} queue={trending} />
-        ))}
-      </HorizontalScroller>
+      {songsLoading ? (
+        <CardRowSkeleton count={6} />
+      ) : (
+        <HorizontalScroller emptyLabel="No songs yet.">
+          {trending.map((song) => (
+            <SongCard key={song.id} song={song} queue={trending} />
+          ))}
+        </HorizontalScroller>
+      )}
 
       <SectionHeader title="Playlists" />
-      <HorizontalScroller
-        emptyLabel={playlistsLoading ? "Loading..." : "No playlists yet."}
-      >
-        {playlists.map((playlist) => (
-          <PlaylistCard key={playlist.id} playlist={playlist} />
-        ))}
-      </HorizontalScroller>
+      {playlistsLoading ? (
+        <CardRowSkeleton count={4} />
+      ) : (
+        <HorizontalScroller emptyLabel="No playlists yet.">
+          {playlists.map((playlist) => (
+            <PlaylistCard key={playlist.id} playlist={playlist} />
+          ))}
+        </HorizontalScroller>
+      )}
 
       <SectionHeader title="Artists" />
-      <HorizontalScroller
-        emptyLabel={artistsLoading ? "Loading..." : "No artists yet."}
-      >
-        {artists.map((artist) => (
-          <ArtistCard key={artist.id} artist={artist} />
-        ))}
-      </HorizontalScroller>
+      {artistsLoading ? (
+        <CardRowSkeleton count={6} round />
+      ) : (
+        <HorizontalScroller emptyLabel="No artists yet.">
+          {artists.map((artist) => (
+            <ArtistCard key={artist.id} artist={artist} />
+          ))}
+        </HorizontalScroller>
+      )}
 
       <SectionHeader title="Continue Listening" />
       <HorizontalScroller emptyLabel="Nothing to continue yet.">

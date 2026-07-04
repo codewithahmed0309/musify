@@ -5,7 +5,8 @@ import SongRow from "@/components/common/SongRow";
 import { ArtistCard, PlaylistCard } from "@/components/common/EntityCards";
 import SectionHeader from "@/components/common/SectionHeader";
 import HorizontalScroller from "@/components/common/HorizontalScroller";
-
+import { RowSkeleton, CardRowSkeleton } from "@/components/common/loader";
+import EmptyState from "@/components/common/EmptyState";
 
 export default function Search() {
   const [query, setQuery] = useState("");
@@ -42,13 +43,18 @@ export default function Search() {
       )}
 
       {query.trim() && loading && (
-        <p className="text-sm text-ahmedify-text-secondary">Searching...</p>
+        <div className="flex flex-col gap-3">
+          <RowSkeleton />
+          <RowSkeleton />
+          <CardRowSkeleton count={4} />
+        </div>
       )}
 
       {query.trim() && !loading && !hasResults && (
-        <p className="text-sm text-ahmedify-text-secondary">
-          No results for "{query}".
-        </p>
+        <EmptyState
+          title={`No results for "${query}"`}
+          description="Try a different title, artist, or album name."
+        />
       )}
 
       {results.songs.length > 0 && (
@@ -80,7 +86,7 @@ export default function Search() {
             {results.albums.map((album) => (
               <div
                 key={album.id}
-                className="w-40 shrink-0 rounded-xl p-3 bg-ahmedify-card"
+                className="w-40 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover hover:-translate-y-0.5 hover:shadow-card transition-all duration-200"
               >
                 <div className="aspect-square rounded-lg overflow-hidden bg-ahmedify-bg-secondary mb-3">
                   {album.cover_url ? (
@@ -111,7 +117,6 @@ export default function Search() {
           </HorizontalScroller>
         </>
       )}
-
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { usePlaylists } from "@/hooks/useMusicData";
 import { PlaylistCard } from "@/components/common/EntityCards";
+import { GridSkeleton } from "@/components/common/loader";
+import EmptyState from "@/components/common/EmptyState";
 
 export default function Playlists() {
   const { data: playlists, loading } = usePlaylists();
@@ -10,20 +12,22 @@ export default function Playlists() {
         Playlists
       </h1>
 
-      {loading && (
-        <p className="text-sm text-ahmedify-text-secondary">Loading...</p>
-      )}
+      {loading && <GridSkeleton count={10} />}
+
       {!loading && playlists.length === 0 && (
-        <p className="text-sm text-ahmedify-text-secondary">
-          No playlists yet.
-        </p>
+        <EmptyState
+          title="No playlists yet"
+          description="Create one from the Add Song page by selecting songs and giving it a name."
+        />
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
-        {playlists.map((playlist) => (
-          <PlaylistCard key={playlist.id} playlist={playlist} />
-        ))}
-      </div>
+      {!loading && playlists.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
+          {playlists.map((playlist) => (
+            <PlaylistCard key={playlist.id} playlist={playlist} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

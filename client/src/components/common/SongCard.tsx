@@ -22,7 +22,7 @@ export default function SongCard({ song, queue }: Props) {
   return (
     <button
       onClick={handleClick}
-      className="group flex flex-col text-left w-40 md:w-44 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover transition-colors"
+      className="group flex flex-col text-left w-40 md:w-44 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover hover:-translate-y-0.5 hover:shadow-card transition-all duration-200"
     >
       <div className="relative aspect-square rounded-lg overflow-hidden bg-ahmedify-bg-secondary mb-3">
         {song.cover_url ? (

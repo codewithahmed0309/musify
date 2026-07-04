@@ -111,7 +111,14 @@ export default function FullPlayer() {
                     step={0.1}
                     value={currentTime}
                     onChange={(e) => seekTo(Number(e.target.value))}
-                    className="w-full accent-ahmedify-green"
+                    className="seek-bar w-full accent-ahmedify-green"
+                    style={{
+                      background: `linear-gradient(to right, #1DB954 ${
+                        duration ? (currentTime / duration) * 100 : 0
+                      }%, #4a4a4a ${
+                        duration ? (currentTime / duration) * 100 : 0
+                      }%)`,
+                    }}
                     aria-label="Seek"
                   />
                   <div className="flex justify-between text-xs text-ahmedify-text-secondary mt-1">

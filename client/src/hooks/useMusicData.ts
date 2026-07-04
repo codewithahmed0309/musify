@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
+import { useToast } from "@/hooks/useToast";
 import type { Album, Artist, Playlist, SearchResults, Song } from "@/types";
 
 function useFetch<T>(url: string, fallback: T) {
@@ -7,6 +8,12 @@ function useFetch<T>(url: string, fallback: T) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const { showToast } = useToast();
+  // Skip the toast on the very first mount of the whole app (StrictMode
+  // double-invokes effects too) — a transient blip while the API is still
+  // warming up shouldn't greet the user with an error before anything's
+  // rendered. Subsequent failures (including manual refetches) still toast.
+  const hasLoadedOnce = useRef(false);
 
   const refetch = useCallback(() => setReloadToken((n) => n + 1), []);
 
@@ -16,17 +23,30 @@ function useFetch<T>(url: string, fallback: T) {
     api
       .get<T>(url)
       .then((res) => {
-        if (active) setData(res.data);
+        if (active) {
+          setData(res.data);
+          setError(null);
+        }
       })
       .catch((err) => {
-        if (active) setError(err.message ?? "Failed to load");
+        if (!active) return;
+        const message =
+          err?.response?.data?.message ?? err?.message ?? "Failed to load";
+        setError(message);
+        if (hasLoadedOnce.current) {
+          showToast(`Couldn't refresh: ${message}`, "error");
+        }
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+          hasLoadedOnce.current = true;
+        }
       });
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, reloadToken]);
 
   return { data, loading, error, refetch };

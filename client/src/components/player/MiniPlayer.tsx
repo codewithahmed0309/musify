@@ -130,7 +130,7 @@ export default function MiniPlayer() {
             step={0.1}
             value={currentTime}
             onChange={(e) => seekTo(Number(e.target.value))}
-            className="flex-1 accent-ahmedify-green"
+            className="seek-bar flex-1 accent-ahmedify-green"
             style={{
               background: `linear-gradient(to right, #1DB954 ${
                 duration ? (currentTime / duration) * 100 : 0

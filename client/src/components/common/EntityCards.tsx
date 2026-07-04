@@ -6,7 +6,7 @@ export function ArtistCard({ artist }: { artist: Artist }) {
   return (
     <button
       onClick={() => navigate(`/artists/${artist.id}`)}
-      className="flex flex-col items-center text-center w-32 md:w-36 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover transition-colors"
+      className="flex flex-col items-center text-center w-32 md:w-36 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover hover:-translate-y-0.5 hover:shadow-card transition-all duration-200"
     >
       <div className="h-24 w-24 rounded-full overflow-hidden bg-ahmedify-bg-secondary mb-3">
         {artist.image_url ? (
@@ -29,7 +29,7 @@ export function PlaylistCard({ playlist }: { playlist: Playlist }) {
   return (
     <button
       onClick={() => navigate(`/playlists/${playlist.id}`)}
-      className="flex flex-col text-left w-40 md:w-44 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover transition-colors"
+      className="flex flex-col text-left w-40 md:w-44 shrink-0 rounded-xl p-3 bg-ahmedify-card hover:bg-ahmedify-card-hover hover:-translate-y-0.5 hover:shadow-card transition-all duration-200"
     >
       <div className="aspect-square rounded-lg overflow-hidden bg-ahmedify-bg-secondary mb-3">
         {playlist.cover_url ? (
