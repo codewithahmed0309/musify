@@ -26,11 +26,13 @@ export const addSong = asyncHandler(async (req: Request, res: Response) => {
     durationSeconds?: number;
   };
 
-  if (!title || !artistName || !audioUrl) {
-    throw new AppError("title, artistName, and audioUrl are required", 400);
+  if (!title || !audioUrl) {
+    throw new AppError("title and audioUrl are required", 400);
   }
 
-  const artistId = await getOrCreateArtist(artistName);
+  // Artist is optional on upload — songs without one are filed under a
+  // shared "Unknown Artist" entry rather than blocking the upload.
+  const artistId = await getOrCreateArtist(artistName?.trim() || "Unknown Artist");
 
   let albumId: string | null = null;
   if (albumTitle) {

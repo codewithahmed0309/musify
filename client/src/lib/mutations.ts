@@ -25,8 +25,30 @@ export function createPlaylist(payload: {
   return api.post<Playlist>("/playlists", payload).then((r) => r.data);
 }
 
+export function updatePlaylist(
+  id: string,
+  payload: {
+    name?: string;
+    description?: string | null;
+    coverUrl?: string | null;
+    songIds?: string[];
+  }
+) {
+  return api.patch<Playlist>(`/playlists/${id}`, payload).then((r) => r.data);
+}
+
+export function deletePlaylist(id: string) {
+  return api.delete(`/playlists/${id}`);
+}
+
 export function addSongsToPlaylist(playlistId: string, songIds: string[]) {
   return api
     .post<Playlist>(`/playlists/${playlistId}/songs`, { songIds })
+    .then((r) => r.data);
+}
+
+export function removeSongsFromPlaylist(playlistId: string, songIds: string[]) {
+  return api
+    .delete<Playlist>(`/playlists/${playlistId}/songs`, { data: { songIds } })
     .then((r) => r.data);
 }

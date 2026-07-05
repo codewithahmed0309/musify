@@ -110,8 +110,8 @@ export default function AddSong() {
       showToast("Please select an audio file.", "error");
       return;
     }
-    if (!title || !artistName) {
-      showToast("Title and artist name are required.", "error");
+    if (!title) {
+      showToast("Song title is required.", "error");
       return;
     }
 
@@ -133,7 +133,7 @@ export default function AddSong() {
 
       await api.post("/songs", {
         title,
-        artistName,
+        artistName: artistName || undefined,
         albumTitle: albumTitle || undefined,
         coverUrl,
         audioUrl,
@@ -301,14 +301,14 @@ export default function AddSong() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-ahmedify-text-secondary">
-              Artist Name
+              Artist Name (optional)
             </label>
             <input
               type="text"
-              required
               disabled={isSubmitting}
               value={artistName}
               onChange={(e) => setArtistName(e.target.value)}
+              placeholder="Unknown Artist"
               className="bg-ahmedify-card border border-ahmedify-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-ahmedify-green transition-colors disabled:opacity-60"
             />
           </div>

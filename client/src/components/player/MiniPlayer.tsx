@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { usePlayerStore } from "@/store/playerStore";
 import { useAudioEngineContext } from "@/hooks/AudioEngineContext";
+import SeekBar from "@/components/common/SeekBar";
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -123,20 +124,11 @@ export default function MiniPlayer() {
           <span className="text-[11px] text-ahmedify-text-secondary w-9 text-right">
             {formatTime(currentTime)}
           </span>
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step={0.1}
-            value={currentTime}
-            onChange={(e) => seekTo(Number(e.target.value))}
-            className="seek-bar flex-1 accent-ahmedify-green"
-            style={{
-              background: `linear-gradient(to right, #1DB954 ${
-                duration ? (currentTime / duration) * 100 : 0
-              }%, #4a4a4a ${duration ? (currentTime / duration) * 100 : 0}%)`,
-            }}
-            aria-label="Seek"
+          <SeekBar
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={seekTo}
+            className="flex-1"
           />
           <span className="text-[11px] text-ahmedify-text-secondary w-9">
             {formatTime(duration)}

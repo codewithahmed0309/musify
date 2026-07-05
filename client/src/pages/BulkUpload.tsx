@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Loader2,
   Plus,
+  FolderPlus,
 } from "lucide-react";
 import { api, UPLOAD_TIMEOUT_MS } from "@/lib/api";
 import { useToast } from "@/hooks/useToast";
@@ -72,6 +73,119 @@ function titleFromFilename(name: string): string {
   return words
     .map((w) => (w.length > 1 ? w[0].toUpperCase() + w.slice(1) : w.toUpperCase()))
     .join(" ");
+}
+
+function titleCaseFolderName(name: string): string {
+  return name
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => (w.length > 1 ? w[0].toUpperCase() + w.slice(1) : w.toUpperCase()))
+    .join(" ");
+}
+
+// Dropped/selected folders arrive as relative paths like
+// "Drake/Views/Hotline Bling.mp3" or "Drake/Hotline Bling.mp3". The nearest
+// enclosing folder is treated as the album, and the one above that (if any)
+// as the artist — matching how most people actually organize a music
+// library on disk ("Artist/Album/Track.mp3"). A single enclosing folder
+// with no grandparent is treated as the artist, since that's the far more
+// common shape for a casually-organized folder ("Drake/Hotline Bling.mp3").
+function inferFromRelativePath(relativePath: string): {
+  artist: string;
+  album: string;
+} {
+  const parts = relativePath.split("/").filter(Boolean);
+  // Drop the filename itself — only folder segments matter here.
+  const folders = parts.slice(0, -1);
+
+  if (folders.length >= 2) {
+    return {
+      artist: titleCaseFolderName(folders[folders.length - 2]),
+      album: titleCaseFolderName(folders[folders.length - 1]),
+    };
+  }
+  if (folders.length === 1) {
+    return { artist: titleCaseFolderName(folders[0]), album: "" };
+  }
+  return { artist: "", album: "" };
+}
+
+// Recursively walks a dropped DataTransferItemList (which may contain whole
+// folders, not just files) using the webkitGetAsEntry API, returning every
+// audio file found along with its path relative to the folder it was
+// dropped in. Falls back to flat files (relativePath === file.name) when
+// the browser doesn't expose entries (e.g. dragging from some OS file
+// pickers), so plain file drops keep working exactly as before.
+function readEntry(
+  entry: FileSystemEntry,
+  path: string
+): Promise<{ file: File; relativePath: string }[]> {
+  return new Promise((resolve) => {
+    if (entry.isFile) {
+      (entry as FileSystemFileEntry).file(
+        (file) => resolve([{ file, relativePath: `${path}${file.name}` }]),
+        () => resolve([])
+      );
+      return;
+    }
+    if (entry.isDirectory) {
+      const dirEntry = entry as FileSystemDirectoryEntry;
+      const reader = dirEntry.createReader();
+      const allEntries: FileSystemEntry[] = [];
+      const readBatch = () => {
+        reader.readEntries(
+          (batch) => {
+            if (batch.length === 0) {
+              Promise.all(
+                allEntries.map((child) =>
+                  readEntry(child, `${path}${entry.name}/`)
+                )
+              ).then((results) => resolve(results.flat()));
+              return;
+            }
+            allEntries.push(...batch);
+            readBatch();
+          },
+          () => resolve([])
+        );
+      };
+      readBatch();
+      return;
+    }
+    resolve([]);
+  });
+}
+
+async function collectFilesFromDataTransfer(
+  dataTransfer: DataTransfer
+): Promise<{ file: File; relativePath: string }[]> {
+  const items = Array.from(dataTransfer.items ?? []);
+  const supportsEntries = items.some(
+    (item) => typeof item.webkitGetAsEntry === "function"
+  );
+
+  if (!supportsEntries) {
+    return Array.from(dataTransfer.files).map((file) => ({
+      file,
+      relativePath: file.name,
+    }));
+  }
+
+  const entries = items
+    .map((item) => item.webkitGetAsEntry?.())
+    .filter((entry): entry is FileSystemEntry => Boolean(entry));
+
+  if (entries.length === 0) {
+    return Array.from(dataTransfer.files).map((file) => ({
+      file,
+      relativePath: file.name,
+    }));
+  }
+
+  const results = await Promise.all(entries.map((entry) => readEntry(entry, "")));
+  return results.flat();
 }
 
 function formatFileSize(bytes: number): string {
@@ -165,6 +279,7 @@ export default function BulkUpload() {
 
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -185,25 +300,40 @@ export default function BulkUpload() {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
   }
 
-  async function addFiles(fileList: FileList | File[]) {
-    const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(mp3|wav|flac|m4a|aac|ogg)$/i.test(f.name));
-    if (files.length === 0) return;
+  async function addFiles(
+    entries: { file: File; relativePath: string }[]
+  ) {
+    const audioEntries = entries.filter(
+      ({ file }) =>
+        file.type.startsWith("audio/") || /\.(mp3|wav|flac|m4a|aac|ogg)$/i.test(file.name)
+    );
+    if (audioEntries.length === 0) return;
 
-    const newItems: QueueItem[] = files.map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
-      file,
-      title: titleFromFilename(file.name),
-      artist: "",
-      album: "",
-      genre: "",
-      coverUrl: null,
-      duration: null,
-      status: "ready",
-      progress: 0,
-      expanded: true,
-    }));
+    const newItems: QueueItem[] = audioEntries.map(({ file, relativePath }) => {
+      const { artist, album } = inferFromRelativePath(relativePath);
+      return {
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        title: titleFromFilename(file.name),
+        artist,
+        album,
+        genre: "",
+        coverUrl: null,
+        duration: null,
+        status: "ready",
+        progress: 0,
+        expanded: true,
+      };
+    });
 
     setItems((prev) => [...prev, ...newItems]);
+
+    if (newItems.some((item) => item.artist)) {
+      showToast(
+        "Artist (and album, where available) filled in automatically from the folder structure.",
+        "success"
+      );
+    }
 
     // Duration reads happen off the main thread of user interaction so the
     // queue renders instantly, then fills in as metadata becomes available.
@@ -214,15 +344,34 @@ export default function BulkUpload() {
     });
   }
 
+  function filesToEntries(fileList: FileList | File[]): { file: File; relativePath: string }[] {
+    return Array.from(fileList).map((file) => ({
+      // `webkitRelativePath` is populated when files come from a
+      // <input webkitdirectory> folder picker, giving us the same
+      // "Artist/Album/Track.mp3" shape as a dropped folder.
+      file,
+      relativePath:
+        (file as File & { webkitRelativePath?: string }).webkitRelativePath ||
+        file.name,
+    }));
+  }
+
   function handleFileInputChange(e: ChangeEvent<HTMLInputElement>) {
-    if (e.target.files) addFiles(e.target.files);
+    if (e.target.files) addFiles(filesToEntries(e.target.files));
     e.target.value = "";
   }
 
-  function handleDrop(e: ReactDragEvent<HTMLDivElement>) {
+  function handleFolderInputChange(e: ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) addFiles(filesToEntries(e.target.files));
+    e.target.value = "";
+  }
+
+  async function handleDrop(e: ReactDragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDraggingFiles(false);
-    if (e.dataTransfer.files) addFiles(e.dataTransfer.files);
+    if (!e.dataTransfer) return;
+    const entries = await collectFilesFromDataTransfer(e.dataTransfer);
+    addFiles(entries);
   }
 
   function removeItem(id: string) {
@@ -269,12 +418,10 @@ export default function BulkUpload() {
   }
 
   const uploadSingle = useCallback(async (item: QueueItem) => {
-    if (!item.title.trim() || !item.artist.trim()) {
+    if (!item.title.trim()) {
       patchItem(item.id, {
         status: "error",
-        errorMessage: !item.title.trim()
-          ? "Song title is required."
-          : "Artist name is required.",
+        errorMessage: "Song title is required.",
       });
       return false;
     }
@@ -288,7 +435,9 @@ export default function BulkUpload() {
 
       await api.post("/songs", {
         title: item.title.trim(),
-        artistName: item.artist.trim(),
+        // Artist is optional — an empty value falls back to "Unknown
+        // Artist" server-side rather than blocking the upload.
+        artistName: item.artist.trim() || undefined,
         albumTitle: item.album.trim() || undefined,
         coverUrl: item.coverUrl ?? undefined,
         audioUrl,
@@ -423,6 +572,15 @@ export default function BulkUpload() {
               <Plus size={13} /> Select More
             </button>
 
+            <button
+              type="button"
+              onClick={() => folderInputRef.current?.click()}
+              title="Pick a folder — song titles, and artist/album where the folder structure implies them, fill in automatically"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+            >
+              <FolderPlus size={13} /> Select Folder
+            </button>
+
             {items.length > 0 && (
               <>
                 <button
@@ -473,13 +631,30 @@ export default function BulkUpload() {
           className="hidden"
           onChange={handleFileInputChange}
         />
+        <input
+          ref={folderInputRef}
+          type="file"
+          multiple
+          // @ts-expect-error -- non-standard but universally supported attribute for folder selection
+          webkitdirectory="true"
+          directory="true"
+          className="hidden"
+          onChange={handleFolderInputChange}
+        />
 
         {/* Empty state / dropzone */}
         {items.length === 0 && (
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => fileInputRef.current?.click()}
-            className={`mt-6 w-full flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-20 transition-colors ${
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            className={`mt-6 w-full flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-20 transition-colors cursor-pointer ${
               isDraggingFiles
                 ? "border-purple-400/60 bg-purple-500/5"
                 : "border-white/10 bg-white/[0.02] hover:border-white/20"
@@ -489,15 +664,27 @@ export default function BulkUpload() {
               <Music2 size={26} className="text-purple-300" />
             </div>
             <p className="text-sm font-medium text-slate-200">
-              Drag audio files here, or click to browse
+              Drag audio files or a whole folder here, or click to browse
             </p>
             <p className="text-xs text-slate-500">
-              Select as many songs as you like — you'll edit each one's details before anything uploads.
+              Drop an "Artist/Album" folder and we'll fill in the artist and
+              album for you — you can still edit every detail before anything
+              uploads.
             </p>
             <span className="mt-2 inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white">
               <UploadCloud size={14} /> Select Audio Files
             </span>
-          </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                folderInputRef.current?.click();
+              }}
+              className="text-xs font-medium text-slate-400 hover:text-slate-200 underline underline-offset-2"
+            >
+              or select a folder instead
+            </button>
+          </div>
         )}
 
         {/* Queue */}
@@ -643,7 +830,7 @@ export default function BulkUpload() {
                             value={item.artist}
                             disabled={item.status === "uploading"}
                             onChange={(e) => patchItem(item.id, { artist: e.target.value })}
-                            placeholder="Required"
+                            placeholder="Optional"
                             className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-400/50 transition-colors disabled:opacity-60 placeholder:text-slate-600"
                           />
                         </div>

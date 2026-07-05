@@ -6,13 +6,42 @@ import {
   createPlaylist,
   updatePlaylist,
   addSongsToPlaylist,
+  removeSongsFromPlaylist,
   getPlaylistById,
+  deletePlaylist,
 } from "../services/playlists.service.js";
 import { deleteFileByUrl } from "../services/storage.service.js";
 
 export const listPlaylists = asyncHandler(async (_req: Request, res: Response) => {
   const playlists = await getAllPlaylists();
   res.json(playlists);
+});
+
+// Single-playlist lookup — powers the playlist detail page so opening a
+// playlist actually loads its own data instead of falling back to the list.
+export const getPlaylistHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const playlist = await getPlaylistById(id);
+  res.json(playlist);
+});
+
+export const deletePlaylistHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { coverUrl } = await deletePlaylist(id);
+  await deleteFileByUrl(coverUrl);
+  res.status(204).send();
+});
+
+export const removeSongsFromPlaylistHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { songIds } = req.body as { songIds?: string[] };
+
+  if (!songIds || songIds.length === 0) {
+    throw new AppError("songIds must be a non-empty array", 400);
+  }
+
+  const playlist = await removeSongsFromPlaylist(id, songIds);
+  res.json(playlist);
 });
 
 export const createPlaylistHandler = asyncHandler(async (req: Request, res: Response) => {

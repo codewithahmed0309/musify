@@ -15,6 +15,10 @@ interface Props {
   queue?: Song[];
   onDelete?: (song: Song) => void;
   hideThumbnail?: boolean;
+  /** Tooltip for the trash icon — defaults to "Delete song" but callers like
+   * a playlist detail view (where the action only removes it from the
+   * playlist, not the library) should override this. */
+  deleteLabel?: string;
 }
 
 export default function SongRow({
@@ -23,6 +27,7 @@ export default function SongRow({
   queue,
   onDelete,
   hideThumbnail = false,
+  deleteLabel = "Delete song",
 }: Props) {
   const { currentSong, isPlaying, playSong, togglePlay } = usePlayerStore();
   const isCurrent = currentSong?.id === song.id;
@@ -105,7 +110,7 @@ export default function SongRow({
           type="button"
           onClick={handleDeleteClick}
           onBlur={() => setConfirming(false)}
-          title={confirming ? "Click again to confirm delete" : "Delete song"}
+          title={confirming ? "Click again to confirm delete" : deleteLabel}
           className={`shrink-0 rounded-md p-1.5 transition-colors ${
             confirming
               ? "bg-red-500/20 text-red-400"

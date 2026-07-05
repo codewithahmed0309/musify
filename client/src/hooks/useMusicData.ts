@@ -18,6 +18,10 @@ function useFetch<T>(url: string, fallback: T) {
   const refetch = useCallback(() => setReloadToken((n) => n + 1), []);
 
   useEffect(() => {
+    if (!url) {
+      setLoading(false);
+      return;
+    }
     let active = true;
     setLoading(true);
     api
@@ -56,6 +60,16 @@ export const useSongs = () => useFetch<Song[]>("/songs", []);
 export const useArtists = () => useFetch<Artist[]>("/artists", []);
 export const useAlbums = () => useFetch<Album[]>("/albums", []);
 export const usePlaylists = () => useFetch<Playlist[]>("/playlists", []);
+
+// Single-playlist fetch used by the playlist detail page. Pass `undefined`
+// to skip the request entirely (e.g. while no id is present yet) — the
+// underlying useFetch treats an empty url as "don't fetch".
+export function usePlaylist(id: string | undefined) {
+  return useFetch<Playlist | null>(
+    id ? `/playlists/${id}` : "",
+    null
+  );
+}
 
 export function useSearch(query: string) {
   const [results, setResults] = useState<SearchResults>({

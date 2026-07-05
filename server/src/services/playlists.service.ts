@@ -104,6 +104,22 @@ export async function updatePlaylist(
   return getPlaylistById(id);
 }
 
+export async function deletePlaylist(id: string): Promise<{ coverUrl: string | null }> {
+  const existing = await getPlaylistById(id);
+  const { error } = await supabase.from("playlists").delete().eq("id", id);
+  if (error) throw new AppError(error.message, 500);
+  return { coverUrl: existing.cover_url };
+}
+
+// Removes song ids from a playlist — used by the "remove from playlist"
+// action so callers don't need to fetch + diff the list themselves.
+export async function removeSongsFromPlaylist(id: string, songIds: string[]): Promise<Playlist> {
+  const existing = await getPlaylistById(id);
+  const toRemove = new Set(songIds);
+  const remaining = existing.song_ids.filter((songId) => !toRemove.has(songId));
+  return updatePlaylist(id, { songIds: remaining });
+}
+
 // Adds song ids to a playlist without duplicating ones already present —
 // used by the "add these to a playlist" flow so callers don't need to fetch
 // the current list first just to merge it themselves.
